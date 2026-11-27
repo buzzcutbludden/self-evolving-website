@@ -7,5 +7,12 @@
     "file": "public/index.html",
     "description": "Changed hero title colour to green per visitor feedback",
     "agentAnalysis": "Visitor asked for a green hero title. Adding a CSS rule to change the hero h1 colour to green."
+  },
+  {
+    "id": "1795789246030-mw44df",
+    "timestamp": "2026-11-27T14:20:46.030Z",
+    "action": "rollback",
+    "version": "v1795789189089",
+    "description": "Rolled back to version v1795789189089"
   }
 ]
