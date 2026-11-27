@@ -262,6 +262,6 @@ function requireAdmin(event) {
 }
 
 module.exports = {
-  REPO, SOURCE_FILES, getFile, getJSON, commitFiles, runAgentCycle, rollbackTo,
+  REPO, BRANCH, SOURCE_FILES, gh, getFile, getJSON, commitFiles, runAgentCycle, rollbackTo,
   response, requireAdmin, setState
 };

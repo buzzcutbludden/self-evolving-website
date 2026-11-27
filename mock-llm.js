@@ -16,7 +16,7 @@ http.createServer((req, res) => {
       const result = {
         analysis: 'Visitor asked for a green hero title. Adding a CSS rule to change the hero h1 colour to green.',
         changes: [{
-          file: 'index.html',
+          file: 'public/index.html',
           description: 'Changed hero title colour to green per visitor feedback',
           content: modified
         }]
