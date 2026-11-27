@@ -1,0 +1,8 @@
+[build]
+  publish = "public"
+  functions = "netlify/functions"
+
+# Autonomous improvement loop (UTC, hourly). 30-second execution limit,
+# so the manual "Run Agent Now" button is the fallback for long LLM calls.
+[functions."agent-cron"]
+  schedule = "@hourly"

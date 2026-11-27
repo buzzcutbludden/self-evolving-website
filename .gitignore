@@ -1,0 +1,6 @@
+node_modules/
+.env
+server.log
+data/staging/
+versions/*
+!versions/.gitkeep
