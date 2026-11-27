@@ -1,6 +1,34 @@
 # Self-Evolving Website
 
-A prototype of an autonomous website that improves itself based on visitor feedback.
+Live: https://self-evolving-website.netlify.app
+Repo: https://github.com/buzzcutbludden/self-evolving-website
+
+## Deployment setup (one time)
+
+1. Netlify → this project → **Environment variables** → add:
+   - `GITHUB_TOKEN` = a GitHub classic PAT with `repo` scope (secret)
+   - `OPENAI_API_KEY` = your OpenRouter API key (secret)
+   - Already configured: `GITHUB_REPO`, `OPENAI_BASE_URL=https://openrouter.ai/api/v1`, `OPENAI_MODEL=openai/gpt-4o-mini`, `ADMIN_TOKEN`, `SITE_URL`.
+2. Netlify → **Build & deploy → Link repository** → link `buzzcutbludden/self-evolving-website`.
+   After this, every commit the agent makes triggers a real redeploy.
+3. Open `/admin.html`, log in with `ADMIN_TOKEN`, and click **Run Agent Now**.
+
+## Architecture (deployed)
+
+- Static site in `public/`, served by Netlify.
+- Netlify Functions in `netlify/functions/` handle feedback, status, history,
+  versions, rollback and the agent. They use only Node built-ins + `fetch`.
+- The GitHub repo is the database: `data/feedback.json`, `data/history.json`,
+  `data/agent-state.json`, and `versions/v*/` snapshots.
+- The agent snapshots source, asks the LLM for complete files, validates them,
+  and commits source + history + snapshots in one Git Data API commit.
+- `agent-cron` is scheduled hourly via `netlify.toml` (30 s function limit).
+
+## Local development (legacy Express version)
+
+`server.js` still runs the original single-process version on port 4000. The
+frontend now targets Netlify Functions, so use the deployed site or the local
+function harness (`test-harness.js` with `mock-llm.js`) for the current code.
 
 ## Setup
 
