@@ -1,0 +1,21 @@
+name: Self-evolving agent cron
+
+# Runs entirely on GitHub's servers every 5 minutes (UTC). No browser,
+# visitor, or open site is required. Feedback stays queued until the agent
+# successfully processes it.
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+
+jobs:
+  trigger-agent:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Trigger the deployed agent
+        run: |
+          curl -fsS -X POST \
+            -H 'Content-Type: application/json' \
+            -H "x-admin-token: ${{ secrets.AGENT_TOKEN }}" \
+            https://self-evolving-website.netlify.app/.netlify/functions/agent
