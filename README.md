@@ -76,3 +76,8 @@ without spending API credits. To use it:
 - `public/` - Static website files (HTML, CSS, JS)
 - `data/` - Feedback and history JSON files
 - `versions/` - Backups of source files before each agent modification
+
+## Automatic deploys
+
+The Netlify site is linked to this repository's `main` branch with a deploy key.
+Every commit pushed by the agent triggers a production deploy automatically.
