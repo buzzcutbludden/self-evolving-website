@@ -2,8 +2,10 @@
   publish = "public"
   functions = "netlify/functions"
 
-# Autonomous improvement loop (UTC, every 5 minutes). Netlify scheduled
-# functions have a 30-second limit, so the admin "Run Agent Now" button
-# remains the fallback for slow LLM calls.
+# Autonomous improvement loop (UTC, every 5 minutes). The cron only dispatches;
+# the background worker runs the LLM with a 15-minute execution limit.
+[functions."agent-worker"]
+  background = true
+
 [functions."agent-cron"]
   schedule = "*/5 * * * *"
