@@ -1,4 +1,4 @@
 {
-  "currentTask": "Consulting AI...",
-  "lastRun": "2026-11-28T14:01:24.321Z"
+  "currentTask": "Error: LLM 429: {\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"particle-ai/particle-1:free is temporarily rate-limited upstream. Please retry shortly, or add your own provider key to use ",
+  "lastRun": "2026-11-28T14:01:26.626Z"
 }
