@@ -207,17 +207,19 @@ CRITICAL: Preserve ALL existing sections, elements, styles and functionality ver
 
     await setState('Testing changes in staging...');
     const staged = {};
+    const errors = [];
     for (const change of (result.changes || [])) {
       const filePath = String(change.file || '').replace(/^\//, '');
       if (!SOURCE_FILES.includes(filePath)) continue;
       const error = validateFile(filePath, change.content, source[filePath]);
-      if (error) continue;
+      if (error) { errors.push(`${filePath}: ${error}`); continue; }
       staged[filePath] = change.content;
     }
 
     if (!Object.keys(staged).length) {
-      await setState('All proposed changes failed validation');
-      return { deployed: 0, task: 'All proposed changes failed validation' };
+      const task = `Validation failed: ${errors[0] || 'no valid changes proposed'}`;
+      await setState(task);
+      return { deployed: 0, task };
     }
 
     await setState('Deploying tested changes...');
