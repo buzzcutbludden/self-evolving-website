@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="loginScreen" class="login-overlay">
+    <div class="login-box">
+      <h2>Admin Access</h2>
+      <input type="password" id="adminToken" placeholder="Enter admin token">
+      <button onclick="login()" class="btn">Login</button>
+    </div>
+  </div>
+  
+  <div id="adminPanel" class="admin-layout" style="display:none;">
+    <aside class="sidebar">
+      <h2>Agent Admin</h2>
+      <nav>
+        <a href="#" class="active">Dashboard</a>
+        <a href="/index.html" target="_blank">View Site</a>
+      </nav>
+    </aside>
+    
+    <main class="admin-content">
+      <div class="status-cards">
+        <div class="card">
+          <h3>Agent Status</h3>
+          <p id="agentStatus">Loading...</p>
+        </div>
+        <div class="card">
+          <h3>Unprocessed Feedback</h3>
+          <p id="unprocessedCount">-</p>
+        </div>
+        <div class="card">
+          <h3>Total Improvements</h3>
+          <p id="improvementCount">-</p>
+        </div>
+        <div class="card">
+          <h3>Current Task</h3>
+          <p id="currentTask">-</p>
+        </div>
+      </div>
+      
+      <section class="admin-section">
+        <h3>Recent Feedback</h3>
+        <div id="feedbackList" class="list-container">Loading...</div>
+      </section>
+      
+      <section class="admin-section">
+        <h3>Modification History</h3>
+        <div id="historyList" class="list-container">Loading...</div>
+      </section>
+      
+      <section class="admin-section">
+        <h3>Version Control</h3>
+        <button id="triggerAgent" class="btn">Run Agent Now</button>
+        <div id="versionList" class="list-container" style="margin-top:1rem;">Loading...</div>
+      </section>
+    </main>
+  </div>
+  
+  <style>
+    .login-overlay {
+      position: fixed;
+      inset: 0;
+      background: var(--bg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+    .login-box {
+      background: var(--card);
+      padding: 2rem;
+      border-radius: 1rem;
+      border: 1px solid var(--border);
+      text-align: center;
+      width: 300px;
+    }
+    .login-box input {
+      margin: 1rem 0;
+    }
+  </style>
+  
+  <script>
+    function login() {
+      const token = document.getElementById('adminToken').value;
+      if (!token) return alert('Please enter a token');
+      sessionStorage.setItem('adminToken', token);
+      document.getElementById('loginScreen').style.display = 'none';
+      document.getElementById('adminPanel').style.display = 'grid';
+      initDashboard();
+    }
+    
+    async function apiCall(url, options = {}) {
+      const token = sessionStorage.getItem('adminToken');
+      options.headers = options.headers || {};
+      options.headers['x-admin-token'] = token;
+      const res = await fetch(url, options);
+      if (res.status === 403) {
+        sessionStorage.removeItem('adminToken');
+        location.reload();
+      }
+      return res;
+    }
+    
+    async function loadStatus() {
+      const res = await apiCall('/.netlify/functions/status');
+      if (!res.ok) return;
+      const data = await res.json();
+      document.getElementById('agentStatus').textContent = data.running ? 'Running' : 'Idle';
+      document.getElementById('unprocessedCount').textContent = data.unprocessedFeedback;
+      document.getElementById('improvementCount').textContent = data.totalImprovements;
+      document.getElementById('currentTask').textContent = data.currentTask;
+    }
+    
+    async function loadFeedback() {
+      const res = await apiCall('/.netlify/functions/get-feedback');
+      if (!res.ok) return;
+      const feedbacks = await res.json();
+      const container = document.getElementById('feedbackList');
+      container.innerHTML = feedbacks.slice(-10).reverse().map(f => `
+        <div class="list-item">
+          <strong>${f.category}</strong> - ${f.name} <small>${new Date(f.timestamp).toLocaleString()}</small>
+          <p>${f.message}</p>
+        </div>
+      `).join('');
+    }
+    
+    async function loadHistory() {
+      const res = await apiCall('/.netlify/functions/history');
+      if (!res.ok) return;
+      const history = await res.json();
+      const container = document.getElementById('historyList');
+      container.innerHTML = history.slice(0, 20).map(h => `
+        <div class="list-item">
+          <strong>${h.action.toUpperCase()}</strong> - ${h.file || 'System'} <small>${new Date(h.timestamp).toLocaleString()}</small>
+          <p>${h.description}</p>
+        </div>
+      `).join('');
+    }
+    
+    async function loadVersions() {
+      const res = await apiCall('/.netlify/functions/versions');
+      if (!res.ok) return;
+      const versions = await res.json();
+      const container = document.getElementById('versionList');
+      container.innerHTML = versions.map(v => `
+        <div class="list-item" style="display:flex;justify-content:space-between;align-items:center;">
+          <span><strong>${v}</strong></span>
+          <button onclick="rollback('${v}')" class="btn-small">Rollback</button>
+        </div>
+      `).join('');
+    }
+    
+    async function rollback(version) {
+      if (!confirm(`Rollback to ${version}? This will revert all source files to their state at that version.`)) return;
+      await apiCall('/.netlify/functions/rollback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ version })
+      });
+      loadHistory();
+      loadVersions();
+    }
+    
+    document.getElementById('triggerAgent').addEventListener('click', async () => {
+      await apiCall('/.netlify/functions/agent', { method: 'POST' });
+      setTimeout(loadStatus, 2000);
+    });
+    
+    function initDashboard() {
+      loadStatus();
+      loadFeedback();
+      loadHistory();
+      loadVersions();
+      setInterval(() => {
+        loadStatus();
+        loadFeedback();
+        loadHistory();
+      }, 5000);
+    }
+  </script>
+</body>
+</html>
