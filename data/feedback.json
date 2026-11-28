@@ -16,5 +16,14 @@
     "message": "Add a small line of text under the hero paragraph saying: Now powered by OpenRouter.",
     "timestamp": "2026-11-28T11:04:04.264Z",
     "status": "processed"
+  },
+  {
+    "id": "1795865049907-4co42j",
+    "name": "Anonymous",
+    "email": "",
+    "category": "general",
+    "message": "the ui looks too simple can you add glassmorphism elements",
+    "timestamp": "2026-11-28T11:24:09.907Z",
+    "status": "new"
   }
 ]
