@@ -1,16 +1,18 @@
-const { runAgentCycle, response } = require('./_lib.js');
-
-// Scheduled by netlify.toml. Runs without a visitor token (internal only).
-// Inline schedule (Netlify reads this when bundling the function).
+// Thin cron: dispatches the background worker and returns immediately.
+// Server-side schedule — no browser, visitor, or open tab is involved.
 exports.config = { schedule: '*/5 * * * *' };
 
 exports.handler = async () => {
+  const site = (process.env.SITE_URL || 'https://self-evolving-website.netlify.app').replace(/\/$/, '');
   try {
-    const result = await runAgentCycle();
-    console.log('Scheduled agent cycle:', JSON.stringify(result));
-    return response(200, { success: true, ...result });
+    const res = await fetch(`${site}/.netlify/functions/agent-worker`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-admin-token': process.env.ADMIN_TOKEN || '' },
+      body: '{}'
+    });
+    console.log('Dispatched agent worker:', res.status);
   } catch (err) {
-    console.error('Scheduled agent cycle failed:', err.message);
-    return response(500, { success: false, error: err.message });
+    console.error('Dispatch failed:', err.message);
   }
+  return { statusCode: 200, body: 'agent worker dispatched' };
 };
