@@ -225,11 +225,19 @@ Rules:
       let failure = null;
       if (Array.isArray(change.patches) && change.patches.length) {
         for (const patch of change.patches) {
-          const find = String(patch.find || '');
+          let find = String(patch.find || '');
+          let replace = String(patch.replace || '');
           if (find.length < 8) { failure = 'Patch "find" snippet is too short'; break; }
-          const occurrences = updated.split(find).length - 1;
+          let occurrences = updated.split(find).length - 1;
+          // Some free providers double-escape quotes/newlines inside JSON strings.
+          if (occurrences !== 1) {
+            const unescape = s => s.replace(/\\n/g, '\n').replace(/\\"/g, '"').replace(/\\t/g, '\t');
+            const f2 = unescape(find), r2 = unescape(replace);
+            const o2 = updated.split(f2).length - 1;
+            if (o2 === 1) { find = f2; replace = r2; occurrences = 1; }
+          }
           if (occurrences !== 1) { failure = `Patch "find" matched ${occurrences} times (must be exactly 1)`; break; }
-          updated = updated.replace(find, String(patch.replace || ''));
+          updated = updated.replace(find, replace);
         }
       } else if (typeof change.content === 'string') {
         failure = 'Model returned a whole file instead of patches';
