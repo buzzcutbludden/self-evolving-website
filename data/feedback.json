@@ -43,5 +43,14 @@
     "message": "Change only the footer link text from Admin Dashboard to Agent Dashboard. Keep everything else exactly the same.",
     "timestamp": "2026-11-28T11:26:05.490Z",
     "status": "processed"
+  },
+  {
+    "id": "1795868207663-pikubm",
+    "name": "Anonymous",
+    "email": "",
+    "category": "feature",
+    "message": "can you add a mini snake game to the website so i can play it",
+    "timestamp": "2026-11-28T12:16:47.663Z",
+    "status": "new"
   }
 ]
