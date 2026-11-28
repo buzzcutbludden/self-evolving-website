@@ -11,14 +11,15 @@ http.createServer((req, res) => {
     let body = '';
     req.on('data', c => body += c);
     req.on('end', () => {
-      const original = fs.readFileSync(INDEX, 'utf-8');
-      const modified = original.replace('</head>', '<style>.hero h1 { color: #4ade80; }</style>\n  </head>');
       const result = {
         analysis: 'Visitor asked for a green hero title. Adding a CSS rule to change the hero h1 colour to green.',
         changes: [{
           file: 'public/index.html',
           description: 'Changed hero title colour to green per visitor feedback',
-          content: modified
+          patches: [{
+            find: '<title>Self-Evolving Website</title>',
+            replace: '<title>Self-Evolving Website</title>\n  <style>.hero h1 { color: #4ade80; }</style>'
+          }]
         }]
       };
       res.writeHead(200, { 'Content-Type': 'application/json' });

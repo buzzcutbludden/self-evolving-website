@@ -183,24 +183,33 @@ async function runAgentCycle() {
       .map(f => `[${f.category}] ${f.name || 'Anonymous'}: ${f.message}`)
       .join('\n');
 
-    const prompt = `You are an autonomous web improvement agent. Analyze the visitor feedback and the current website source files. Decide what improvements would be beneficial and return the complete updated files.
-
-Files: ${SOURCE_FILES.join(', ')}
+    const prompt = `You are an autonomous web improvement agent. Analyze the visitor feedback and decide what small improvements would be beneficial.
 
 Visitor feedback:
 ${feedbackText}
 
-Respond with ONLY valid JSON:
+Current source files (exact text):
+${SOURCE_FILES.map(f => `--- ${f} ---\n${source[f]}`).join('\n\n')}
+
+Respond with ONLY valid JSON using exact find/replace patches:
 {
   "analysis": "Brief summary of findings",
   "changes": [
-    { "file": "public/index.html", "description": "What changed and why", "content": "Complete new file content" }
+    {
+      "file": "public/styles.css",
+      "description": "What changed and why",
+      "patches": [
+        { "find": "an exact, verbatim snippet copied from that file", "replace": "the new snippet" }
+      ]
+    }
   ]
 }
 
-Only include files that need changes. Use the exact file paths listed above. Content must be valid for its file type.
-
-CRITICAL: Preserve ALL existing sections, elements, styles and functionality verbatim. Make the smallest possible targeted edit for the feedback. Do NOT rewrite, simplify, replace or "improve" the overall design or content — the original markup, classes, IDs, form, dashboard and CSS rules must all remain intact. Return the full original file with only the requested change applied.`;
+Rules:
+- "find" MUST be copied verbatim from the file above and appear exactly once in it. Longer snippets are safer.
+- Each patch replaces only that snippet. Never return whole files and never use a "content" field.
+- Only include files that need changes. Make the smallest possible targeted edit.
+- Preserve all existing sections, IDs, classes, form and dashboard elements. Do not redesign or simplify the site.`;
 
     await setState('Consulting AI...');
     const result = await callLLM(prompt);
@@ -211,9 +220,27 @@ CRITICAL: Preserve ALL existing sections, elements, styles and functionality ver
     for (const change of (result.changes || [])) {
       const filePath = String(change.file || '').replace(/^\//, '');
       if (!SOURCE_FILES.includes(filePath)) continue;
-      const error = validateFile(filePath, change.content, source[filePath]);
+
+      let updated = source[filePath];
+      let failure = null;
+      if (Array.isArray(change.patches) && change.patches.length) {
+        for (const patch of change.patches) {
+          const find = String(patch.find || '');
+          if (find.length < 8) { failure = 'Patch "find" snippet is too short'; break; }
+          const occurrences = updated.split(find).length - 1;
+          if (occurrences !== 1) { failure = `Patch "find" matched ${occurrences} times (must be exactly 1)`; break; }
+          updated = updated.replace(find, String(patch.replace || ''));
+        }
+      } else if (typeof change.content === 'string') {
+        failure = 'Model returned a whole file instead of patches';
+      } else {
+        failure = 'No patches supplied';
+      }
+      if (failure) { errors.push(`${filePath}: ${failure}`); continue; }
+
+      const error = validateFile(filePath, updated, source[filePath]);
       if (error) { errors.push(`${filePath}: ${error}`); continue; }
-      staged[filePath] = change.content;
+      staged[filePath] = updated;
     }
 
     if (!Object.keys(staged).length) {
