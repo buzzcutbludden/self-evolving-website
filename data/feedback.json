@@ -24,7 +24,7 @@
     "category": "general",
     "message": "the ui looks too simple can you add glassmorphism elements",
     "timestamp": "2026-11-28T11:24:09.907Z",
-    "status": "new"
+    "status": "processed"
   },
   {
     "id": "1795865052565-u49kfp",
@@ -33,7 +33,7 @@
     "category": "general",
     "message": "the ui looks too simple can you add glassmorphism elements",
     "timestamp": "2026-11-28T11:24:12.565Z",
-    "status": "new"
+    "status": "processed"
   },
   {
     "id": "1795865165490-kqozrm",
@@ -42,6 +42,6 @@
     "category": "general",
     "message": "Change only the footer link text from Admin Dashboard to Agent Dashboard. Keep everything else exactly the same.",
     "timestamp": "2026-11-28T11:26:05.490Z",
-    "status": "new"
+    "status": "processed"
   }
 ]
