@@ -78,7 +78,7 @@ async function commitFiles(files, message) {
   return commit.sha;
 }
 
-function validateFile(filePath, content) {
+function validateFile(filePath, content, original) {
   if (typeof content !== 'string' || content.length < 20) return 'File content is too short';
   if (filePath.endsWith('.css')) {
     const opens = (content.match(/\{/g) || []).length;
@@ -88,6 +88,25 @@ function validateFile(filePath, content) {
   if (filePath.endsWith('.html')) {
     if (!/<html[\s>]/i.test(content) || !/<\/html>/i.test(content)) return 'HTML missing root element';
     if (!/<body[\s>]/i.test(content) || !/<\/body>/i.test(content)) return 'HTML missing body element';
+  }
+
+  // The agent may edit the site, but it must not replace it with a generic
+  // template. Require every essential marker and most original lines to survive.
+  const required = {
+    'public/index.html': ['id="feedbackForm"', 'post-feedback', 'admin.html', 'class="hero"'],
+    'public/admin.html': ['id="adminPanel"', 'x-admin-token', '/.netlify/functions/status', 'id="historyList"'],
+    'public/styles.css': ['.hero', '.feedback-section', '.admin-layout']
+  }[filePath] || [];
+  for (const marker of required) {
+    if (!content.includes(marker)) return `Removed required functionality (${marker})`;
+  }
+
+  if (original) {
+    const originalLines = original.split('\n').map(l => l.trim()).filter(l => l.length > 12);
+    const newLines = new Set(content.split('\n').map(l => l.trim()));
+    const kept = originalLines.filter(l => newLines.has(l)).length;
+    const ratio = originalLines.length ? kept / originalLines.length : 1;
+    if (ratio < 0.7) return `Rewrote too much of the file (kept ${Math.round(ratio * 100)}% of original lines)`;
   }
   return null;
 }
@@ -172,7 +191,9 @@ Respond with ONLY valid JSON:
   ]
 }
 
-Only include files that need changes. Use the exact file paths listed above. Content must be valid for its file type.`;
+Only include files that need changes. Use the exact file paths listed above. Content must be valid for its file type.
+
+CRITICAL: Preserve ALL existing sections, elements, styles and functionality verbatim. Make the smallest possible targeted edit for the feedback. Do NOT rewrite, simplify, replace or "improve" the overall design or content — the original markup, classes, IDs, form, dashboard and CSS rules must all remain intact. Return the full original file with only the requested change applied.`;
 
     await setState('Consulting AI...');
     const result = await callLLM(prompt);
@@ -182,7 +203,7 @@ Only include files that need changes. Use the exact file paths listed above. Con
     for (const change of (result.changes || [])) {
       const filePath = String(change.file || '').replace(/^\//, '');
       if (!SOURCE_FILES.includes(filePath)) continue;
-      const error = validateFile(filePath, change.content);
+      const error = validateFile(filePath, change.content, source[filePath]);
       if (error) continue;
       staged[filePath] = change.content;
     }
@@ -263,5 +284,5 @@ function requireAdmin(event) {
 
 module.exports = {
   REPO, BRANCH, SOURCE_FILES, gh, getFile, getJSON, commitFiles, runAgentCycle, rollbackTo,
-  response, requireAdmin, setState
+  response, requireAdmin, setState, validateFile
 };
