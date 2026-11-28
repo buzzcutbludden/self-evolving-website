@@ -129,21 +129,28 @@ async function callLLM(prompt) {
   const key = process.env.OPENAI_API_KEY;
   if (!key) throw new Error('OPENAI_API_KEY is not configured');
 
-  const res = await fetch(`${base}/chat/completions`, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${key}`,
-      'Content-Type': 'application/json',
-      'HTTP-Referer': process.env.SITE_URL || 'https://self-evolving-website.netlify.app',
-      'X-Title': 'Self-Evolving Website'
-    },
-    body: JSON.stringify({
-      model: process.env.OPENAI_MODEL || 'openai/gpt-4o-mini',
-      messages: [{ role: 'user', content: prompt }],
-      temperature: 0.7,
-      response_format: { type: 'json_object' }
-    })
+  const headers = {
+    'Authorization': `Bearer ${key}`,
+    'Content-Type': 'application/json',
+    'HTTP-Referer': process.env.SITE_URL || 'https://self-evolving-website.netlify.app',
+    'X-Title': 'Self-Evolving Website'
+  };
+  const payload = {
+    model: process.env.OPENAI_MODEL || 'openai/gpt-4o-mini',
+    messages: [{ role: 'user', content: prompt }],
+    temperature: 0.7,
+    response_format: { type: 'json_object' }
+  };
+  let res = await fetch(`${base}/chat/completions`, {
+    method: 'POST', headers, body: JSON.stringify(payload)
   });
+  // Some free models reject response_format; retry without it and parse tolerantly.
+  if (res.status === 400) {
+    delete payload.response_format;
+    res = await fetch(`${base}/chat/completions`, {
+      method: 'POST', headers, body: JSON.stringify(payload)
+    });
+  }
   if (!res.ok) throw new Error(`LLM ${res.status}: ${(await res.text()).slice(0, 200)}`);
   const data = await res.json();
   return extractJSON(data.choices[0].message.content);
