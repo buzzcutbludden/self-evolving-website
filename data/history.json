@@ -23,5 +23,12 @@
     "file": "public/index.html",
     "description": "Added a small line of text under the hero paragraph to promote the OpenRouter feature.",
     "agentAnalysis": "Visitor feedback suggested adding a line of text under the hero paragraph on the homepage. This change enhances the visibility of the new feature, OpenRouter, and provides additional context to visitors."
+  },
+  {
+    "id": "1795864204865-4cyf69",
+    "timestamp": "2026-11-28T11:10:04.865Z",
+    "action": "rollback",
+    "version": "v1795863862425",
+    "description": "Rolled back to version v1795863862425"
   }
 ]

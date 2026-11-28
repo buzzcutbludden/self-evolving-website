@@ -1,25 +1,82 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="styles.css">
-    <title>Home</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Self-Evolving Website</title>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <header>
-        <h1>Welcome to Our Website</h1>
-        <p>Your go-to solution for all your needs.</p>
-        <p>Now powered by OpenRouter.</p>
+  <div class="container">
+    <header class="hero">
+      <h1>Self-Evolving Website</h1>
+      <p>This website improves itself based on your feedback. An AI agent reads your suggestions and modifies this page in real-time.</p>
+      <a href="#feedback" class="btn">Share Your Feedback</a>
     </header>
-    <main>
-        <section>
-            <h2>Features</h2>
-            <p>Explore our amazing features that help you succeed.</p>
-        </section>
-    </main>
+    
+    <section class="features">
+      <div class="card">
+        <h3>Autonomous AI</h3>
+        <p>An AI agent continuously analyzes visitor feedback and implements improvements directly to the source code.</p>
+      </div>
+      <div class="card">
+        <h3>Real-time Evolution</h3>
+        <p>The website's HTML, CSS and JavaScript are modified based on what you ask for.</p>
+      </div>
+      <div class="card">
+        <h3>Version Control</h3>
+        <p>Every change is backed up and can be rolled back if something goes wrong.</p>
+      </div>
+    </section>
+    
+    <section id="feedback" class="feedback-section">
+      <h2>Help Us Improve</h2>
+      <form id="feedbackForm">
+        <div class="form-row">
+          <input type="text" id="name" placeholder="Your name (optional)">
+          <input type="email" id="email" placeholder="Email (optional)">
+        </div>
+        <select id="category">
+          <option value="general">General Feedback</option>
+          <option value="bug">Report a Bug</option>
+          <option value="feature">Request a Feature</option>
+          <option value="design">Design Improvement</option>
+          <option value="performance">Performance</option>
+        </select>
+        <textarea id="message" placeholder="What would you like to see improved?" required></textarea>
+        <button type="submit" class="btn">Submit Feedback</button>
+      </form>
+    </section>
+    
     <footer>
-        <p>&copy; 2023 Our Company</p>
+      <p>Powered by an autonomous AI agent. <a href="/admin.html">Admin Dashboard</a></p>
     </footer>
+  </div>
+  
+  <script>
+    document.getElementById('feedbackForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const data = {
+        name: document.getElementById('name').value,
+        email: document.getElementById('email').value,
+        category: document.getElementById('category').value,
+        message: document.getElementById('message').value
+      };
+      
+      const res = await fetch('/.netlify/functions/post-feedback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      
+      const result = await res.json();
+      if (result.success) {
+        alert('Thank you! Your feedback has been submitted. The AI agent will review it soon.');
+        document.getElementById('feedbackForm').reset();
+      } else {
+        alert('Error: ' + result.error);
+      }
+    });
+  </script>
 </body>
 </html>
