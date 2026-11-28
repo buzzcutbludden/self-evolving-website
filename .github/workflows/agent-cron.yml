@@ -9,13 +9,19 @@ on:
   workflow_dispatch:
 
 jobs:
-  trigger-agent:
+  run-agent:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 15
     steps:
-      - name: Trigger the deployed agent
+      - uses: actions/checkout@v4
+
+      - name: Run the agent cycle
+        env:
+          GITHUB_TOKEN: ${{ secrets.AGENT_GITHUB_TOKEN }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          GITHUB_REPO: buzzcutbludden/self-evolving-website
+          OPENAI_BASE_URL: https://openrouter.ai/api/v1
+          OPENAI_MODEL: google/gemma-4-31b-it:free
+          SITE_URL: https://self-evolving-website.netlify.app
         run: |
-          curl -fsS -X POST \
-            -H 'Content-Type: application/json' \
-            -H "x-admin-token: ${{ secrets.AGENT_TOKEN }}" \
-            https://self-evolving-website.netlify.app/.netlify/functions/agent
+          node -e "require('./netlify/functions/_lib.js').runAgentCycle().then(r => console.log('RESULT', JSON.stringify(r))).catch(e => { console.error(e); process.exit(1); })"
